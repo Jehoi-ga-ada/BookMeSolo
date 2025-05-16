@@ -10,7 +10,11 @@ import SwiftUI
 
 struct MapView: View {
     var body: some View {
-        Text("Map View")
+        NavigationStack {
+            Text("Map View")
+        }
+//        .background(Color.primer)
+        .navigationTitle(Text("Map"))
     }
 }
 

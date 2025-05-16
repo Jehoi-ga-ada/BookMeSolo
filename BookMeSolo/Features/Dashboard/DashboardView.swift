@@ -7,46 +7,105 @@
 
 import Foundation
 import SwiftUI
+import SwiftData
+import TipKit
+
+struct DateTip: Tip {
+    var title: Text { Text("Date Selector") }
+    var message: Text? { Text("Select a date to book.") }
+//    var image: Image? { Image(systemName: "arrow.down.circle") }
+}
+
+
+struct RecentNearestTip: Tip {
+    var title: Text { Text("Recent & Nearest") }
+    var message: Text? { Text("Select to see your recent bookings or nearest available slots.") }
+//    var image: Image? { Image(systemName: "arrow.down.circle") }
+}
+
+struct BookTip: Tip {
+    var title: Text { Text("Book the Session") }
+    var message: Text? { Text("Book the collab room based on the session and the date you selected.") }
+}
 
 struct DashboardView: View {
-    @StateObject private var viewModel = DashboardViewModel()
+        
+    @StateObject private var viewModel: DashboardViewModel
+    @State
+    var tips = TipGroup(.ordered) {
+        RecentNearestTip()
+        DateTip()
+        BookTip()
+    }
+    
+    init(context: ModelContext) {
+        _viewModel = StateObject(wrappedValue: DashboardViewModel(context: context))
+    }
     
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading) {
-                Picker("", selection: $viewModel.selectedTab) {
-                    ForEach(DashboardTab.allCases) { tab in
-                        Text(tab.id).tag(tab)
+            ZStack {
+                Color.primer.ignoresSafeArea()
+                VStack(alignment: .leading) {
+                    Picker("", selection: $viewModel.selectedTab) {
+                        ForEach(DashboardTab.allCases) { tab in
+                            Text(tab.id).tag(tab)
+                        }
                     }
-                }
-                .pickerStyle(SegmentedPickerStyle())
-                .padding(.horizontal)
-                    
-                DatePicker("", selection: $viewModel.selectedDate, displayedComponents: .date)
-                    .datePickerStyle(CompactDatePickerStyle())
-                    .labelsHidden()
+                    .presentationCompactAdaptation(.popover)
+                    .popoverTip(tips.currentTip as? RecentNearestTip)
+                    .pickerStyle(SegmentedPickerStyle())
                     .padding(.horizontal)
-
-                Group {
+                    
+                    DatePicker("", selection: $viewModel.selectedDate, displayedComponents: .date)
+                        .presentationCompactAdaptation(.popover)
+                        .popoverTip(tips.currentTip as? DateTip)
+                        .datePickerStyle(CompactDatePickerStyle())
+                        .labelsHidden()
+                        .padding(.all)
+                    
                     switch viewModel.selectedTab {
                     case .recentlyBooked:
-                        DashboardCardView(date: viewModel.selectedDate, selectedTab: viewModel.selectedTab)
-                            .cornerRadius(10)
-                            .padding(.horizontal)
+                        ScrollView {
+    
+                            ForEach(viewModel.recentlyBooked) { receipt in
+                                let isFirstReceipt = receipt.id == viewModel.recentlyBooked.first?.id
+                                DashboardCardView(date: viewModel.selectedDate, receipt: receipt, tipGroup: tips, isEligible: isFirstReceipt)
+                                    .cornerRadius(10)
+                                    .padding(.horizontal)
+                                    .padding(.bottom)
+                            }
+                            
+                        }
                     case .nearestSession:
-                        DashboardCardView(date: viewModel.selectedDate, selectedTab: viewModel.selectedTab)
-                            .cornerRadius(10)
-                            .padding(.horizontal)
+                        if viewModel.nearestAvailable.isEmpty {
+                            Text("No upcoming sessions")
+                                .frame(width: .infinity, alignment: .center)
+                                .foregroundStyle(.button)
+                                .padding(.horizontal)
+                        } else {
+                            ScrollView {
+                                
+                                ForEach(viewModel.nearestAvailable) { slot in
+                                    let nearest = slot.id == viewModel.nearestAvailable.first?.id
+                                    DashboardCardView(date: viewModel.selectedDate,
+                                                      nearestSession: slot, tipGroup: tips, isEligible: nearest)
+                                        .cornerRadius(10)
+                                        .padding(.horizontal)
+                                        .padding(.bottom)
+                                }
+                                
+                            }
+                        }
                     }
+                    Spacer()
                 }
-                Spacer()
+                .navigationTitle(Text("Dashboard"))
             }
-            .background(Color.primer)
-            .navigationTitle(Text("Dashboard"))
         }
     }
 }
 
-#Preview {
-    DashboardView()
-}
+//#Preview {
+//    DashboardView()
+//}

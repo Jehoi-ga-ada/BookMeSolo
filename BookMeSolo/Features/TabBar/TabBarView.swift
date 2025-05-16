@@ -7,8 +7,18 @@
 
 import Foundation
 import SwiftUI
+import TipKit
+
+struct RoomsTip: Tip {
+    var title: Text { Text("Book a room") }
+    var message: Text? { Text("Book a custom room with your preferred size and amenities") }
+//    var image: Image? { Image(systemName: "arrow.down.circle") }
+}
 
 struct TabBarView: View {
+    var tip = RoomsTip()
+    @Environment(\.modelContext) private var context
+    
     init() {
         let appearance = UINavigationBarAppearance()
         appearance.largeTitleTextAttributes = [
@@ -30,13 +40,13 @@ struct TabBarView: View {
     var body: some View {
         TabView {
             Tab("Dashboard", systemImage: "star"){
-                DashboardView()
+                DashboardView(context: context)
             }
             Tab("Rooms", systemImage: "star"){
-                RoomsView()
+                RoomsView(context: context)
             }
             Tab("History", systemImage: "star"){
-                HistoryView()
+                HistoryView(context: context)
             }
         }
         .tint(.button)
@@ -46,4 +56,5 @@ struct TabBarView: View {
 #Preview {
     TabBarView()
         .modelContainer(SampleData.shared.modelContainer)
+        .preferredColorScheme(.dark)
 }

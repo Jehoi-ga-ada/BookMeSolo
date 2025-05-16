@@ -40,6 +40,22 @@ class CollabRoomModel: Identifiable {
     static let sampleData = CollabRoomData.generateCollabRooms()
 }
 
+extension CollabRoomModel {
+    func availableSessions(on date: Date) -> [String: Bool] {
+        var availability: [String: Bool] = [:]
+        let calendar = Calendar.current
+        
+        for sessionTime in session {
+            // Determine if this session is booked on the given day.
+            let isBooked = bookings.contains { booking in
+                calendar.isDate(booking.date, inSameDayAs: date) && booking.session == sessionTime
+            }
+            availability[sessionTime] = !isBooked
+        }
+        return availability
+    }
+}
+
 struct CodablePoint: Codable, Hashable {
     var x: CGFloat
     var y: CGFloat

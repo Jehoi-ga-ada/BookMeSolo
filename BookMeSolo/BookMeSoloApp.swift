@@ -7,12 +7,24 @@
 
 import SwiftUI
 import SwiftData
+import TipKit
 
 @main
 struct BookMeSoloApp: App {
+    init() {
+        // Remove all saved tip states:
+        try? Tips.resetDatastore()
+        // Then set up TipKit; .immediate ensures no frequency cap:
+        try? Tips.configure([
+            .displayFrequency(.immediate)
+        ])
+    }
+    
     var body: some Scene {
         WindowGroup {
-            DashboardView()
+            TabBarView()
+                .modelContainer(SampleData.shared.modelContainer)
+                .preferredColorScheme(.dark)
         }
     }
 }
